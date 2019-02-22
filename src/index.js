@@ -1,4 +1,6 @@
-import template from "babel-template";
+import { parse } from "@babel/parser";
+import { types as t, template } from "@babel/core";
+import { declare } from "@babel/helper-plugin-utils";
 import _getOpts from "./_getOpts";
 
 const pathExpression = path => {
@@ -10,7 +12,7 @@ const buildSpShow = template("(CONDITION ? EXPRESSION : void 0)");
 const buildSpShowNoVoid = template("(CONDITION ? EXPRESSION : undefined)");
 
 const buildForEachRepeat = repeat => {
-  return template(`${ repeat }(COLLECTION, function(PARAMS) { return BODY; }.bind(this))`);
+  return template(`${ repeat }(COLLECTION, function(PARAMS) { return BODY; }.bind(this))`, { placeholderPattern: /^[A-Z][_A-Z0-9]+$/});
 };
 
 const buildSequenceRepeat = template(`(function(cb) {
@@ -45,7 +47,7 @@ const buildArrayRepeat = (node, path) => {
 };
 
 const buildObjectRepeat = (file, path, node, opts) => {
-  const ast = file.parse(node.value.value);
+  const ast = parse(node.value.value);
 
   if (ast.program.body.length !== 1) {
     throw path.buildCodeFrameError("spRepeat expected value to have one statement");
@@ -85,8 +87,12 @@ const buildObjectRepeat = (file, path, node, opts) => {
   });
 };
 
-export default function({types: t}) {
+export default declare((api, options) => {
+  api.assertVersion(7); // eslint-disable-line no-magic-numbers
+
   return {
+    name: "transform-sp-jsx",
+
     visitor: {
       JSXElement: {
         enter(path, state) {
@@ -94,7 +100,7 @@ export default function({types: t}) {
           let spShow = false;
           const exprTransforms = [];
 
-          const opts = _getOpts(path, state);
+          const opts = Object.assign({}, options, _getOpts(path, state));
 
           const openingElement = path.get("openingElement");
           const attributes = openingElement.get("attributes");
@@ -112,7 +118,7 @@ export default function({types: t}) {
                 });
 
                 const expression = t.JSXExpressionContainer(statement.expression);
-                attr.replaceWith(t.JSXAttribute(t.JSXIdentifier(`on${ name.slice(2) }`), expression));
+                attr.replaceWith(t.JSXAttribute(t.JSXIdentifier(`on${ name.slice("sp".length) }`), expression));
               } else if (name === "spModel") {
                 const expression = attr.get("value").get("expression");
                 if (expression.isMemberExpression()) {
@@ -167,4 +173,4 @@ export default function({types: t}) {
       }
     }
   };
-}
+});

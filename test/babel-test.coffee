@@ -1,15 +1,15 @@
 { assert } = require("chai")
-babel = require("babel-core")
+babel = require("@babel/core")
 
 spopts =
     plugins: [
-        "syntax-jsx",
+        "@babel/plugin-syntax-jsx",
         [require("../"), { repeat: "_.map" }]
     ]
 
 noopts =
     plugins: [
-        "syntax-jsx"
+        "@babel/plugin-syntax-jsx",
     ]
 
 assertStrictEqual = (code, expected, options)->
@@ -64,6 +64,8 @@ describe 'babel', ->
     ]
 
     it 'should transform sp[event]', ->
+        this.timeout(5000)
+
         for type in delegateEvents
             type = type[0].toUpperCase() + type.substring(1)
 
