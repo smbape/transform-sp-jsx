@@ -1,6 +1,6 @@
 {
   "name": "transform-sp-jsx",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Transform special jsx attributes",
   "main": "lib/index.js",
   "directories": {
